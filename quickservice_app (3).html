@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Meemu Sahayam - On-Demand Home Services</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+        /* Mobile App Container */
+        #app-container {
+            width: 100%;
+            max-width: 480px;
+            height: 100vh;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            display: flex;
+            flex-direction: column;
+        }
+        /* Hide scrollbar for clean app look */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        /* Radar Animation for searching */
+        .radar {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            border-radius: 50%;
+            background: rgba(59, 130, 246, 0.1);
+            border: 2px solid rgba(59, 130, 246, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .radar::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(transparent, transparent, transparent, rgba(59, 130, 246, 0.8));
+            animation: scan 2s linear infinite;
+        }
+        .radar-center {
+            width: 20px;
+            height: 20px;
+            background: #3b82f6;
+            border-radius: 50%;
+            position: relative;
+            z-index: 10;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.8);
+        }
+        @keyframes scan {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Pop-up animation */
+        .pop-in {
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        /* New Interface Animations */
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+        .slide-up { animation: slideUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; opacity: 0; }
+        @keyframes slideUp {
+            0% { transform: translateY(20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    
+    <!-- View: Home -->
+    <div id="view-home" class="flex flex-col h-full w-full fade-in">
+        <!-- Top Bar & Search -->
+        <div class="bg-blue-600 text-white px-5 pt-6 pb-6 rounded-b-3xl shadow-lg z-10 shrink-0 relative transition-all">
+            <div class="flex justify-between items-start mb-5">
+                <div>
+                    <!-- App Logo & Brand -->
+                    <div class="flex items-center gap-2.5 mb-3">
+                        <div class="w-10 h-10 bg-white rounded-xl shadow-md flex items-center justify-center relative">
+                            <i class="fas fa-tools text-blue-600 text-lg"></i>
+                            <div class="absolute -top-1 -right-1 w-3.5 h-3.5 bg-yellow-400 border-2 border-white rounded-full shadow-sm"></div>
+                        </div>
+                        <h1 class="text-white font-extrabold text-2xl tracking-tight drop-shadow-sm" id="app-brand">Meemu Sahayam</h1>
+                    </div>
+                    
+                    <span class="text-xs text-blue-200 uppercase tracking-wider font-semibold" id="lbl-current-loc">Current Location</span>
+                    <div class="flex items-center cursor-pointer mt-1" onclick="openLocationModal()">
+                        <i class="fas fa-map-marker-alt text-yellow-300 mr-2 animate-bounce" style="animation-duration: 2s;"></i>
+                        <span class="font-semibold text-lg truncate w-48" id="location-text">Banjara Hills, Hyderabad</span>
+                        <i class="fas fa-chevron-down text-sm ml-2 opacity-80"></i>
+                    </div>
+                </div>
+                <div class="w-10 h-10 mt-1 bg-blue-500 rounded-full flex items-center justify-center border-2 border-white cursor-pointer shadow-sm hover:bg-blue-400 transition-colors">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="relative shadow-md rounded-full">
+                <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="search-input" placeholder="Search services..." class="w-full bg-white text-gray-800 rounded-full py-3.5 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-yellow-400 transition-shadow">
+            </div>
+        </div>
+
+    <!-- Main Content (Scrollable) -->
+    <div class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24">
+        
+        <!-- Banner -->
+        <div class="bg-gradient-to-r from-yellow-400 to-yellow-500 rounded-2xl p-5 mb-6 text-gray-900 shadow-md relative overflow-hidden">
+            <div class="relative z-10 w-2/3">
+                <h2 class="text-xl font-bold mb-1" id="promo-title">Need help quick?</h2>
+                <p class="text-sm opacity-90 mb-3" id="promo-desc">Experts arriving in under 10 mins.</p>
+                <button class="bg-gray-900 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow" id="promo-btn">Explore</button>
+            </div>
+            <i class="fas fa-bolt text-7xl text-yellow-300 absolute -right-2 -bottom-2 opacity-50 transform -rotate-12"></i>
+        </div>
+
+        <!-- Categories -->
+        <h3 class="font-bold text-gray-800 mb-4 text-lg" id="lbl-services">Services</h3>
+        <div class="grid grid-cols-4 gap-4 mb-8">
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Plumber')">
+                <div class="w-14 h-14 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600 text-xl mb-2 shadow-sm border border-blue-100 group-active:scale-95 transition-transform" id="cat-plumber">
+                    <i class="fas fa-wrench"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700" id="lbl-cat-plumber">Plumber</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Electrician')">
+                <div class="w-14 h-14 bg-orange-50 rounded-2xl flex items-center justify-center text-orange-500 text-xl mb-2 shadow-sm border border-orange-100 group-active:scale-95 transition-transform" id="cat-electrician">
+                    <i class="fas fa-plug"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700" id="lbl-cat-electrician">Electrician</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Gardener')">
+                <div class="w-14 h-14 bg-green-50 rounded-2xl flex items-center justify-center text-green-600 text-xl mb-2 shadow-sm border border-green-100 group-active:scale-95 transition-transform" id="cat-gardener">
+                    <i class="fas fa-leaf"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700" id="lbl-cat-gardener">Gardener</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Mason')">
+                <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-600 text-xl mb-2 shadow-sm border border-gray-200 group-active:scale-95 transition-transform" id="cat-mason">
+                    <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2" ry="2"></rect>
+                        <path d="M2 12h20"></path>
+                        <path d="M12 4v8"></path>
+                        <path d="M8 12v8"></path>
+                        <path d="M16 12v8"></path>
+                    </svg>
+                </div>
+                <span class="text-xs font-medium text-gray-700" id="lbl-cat-mason">Mason</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Carpenter')">
+                <div class="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-amber-600 text-xl mb-2 shadow-sm border border-amber-100 group-active:scale-95 transition-transform" id="cat-carpenter">
+                    <i class="fas fa-hammer"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700 text-center" id="lbl-cat-carpenter">Carpenter</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Painter')">
+                <div class="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600 text-xl mb-2 shadow-sm border border-purple-100 group-active:scale-95 transition-transform" id="cat-painter">
+                    <i class="fas fa-paint-roller"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700 text-center" id="lbl-cat-painter">Painter</span>
+            </div>
+            <div class="flex flex-col items-center cursor-pointer group" onclick="selectCategory('Waste')">
+                <div class="w-14 h-14 bg-teal-50 rounded-2xl flex items-center justify-center text-teal-600 text-xl mb-2 shadow-sm border border-teal-100 group-active:scale-95 transition-transform" id="cat-waste">
+                    <i class="fas fa-trash-alt"></i>
+                </div>
+                <span class="text-xs font-medium text-gray-700 text-center" id="lbl-cat-waste">Waste</span>
+            </div>
+        </div>
+
+        <!-- Professionals List -->
+        <div class="flex justify-between items-end mb-4">
+            <h3 class="font-bold text-gray-800 text-lg" id="list-title">Nearby Professionals</h3>
+            <span class="text-xs text-blue-600 font-semibold cursor-pointer" id="lbl-view-all">View All</span>
+        </div>
+        
+        <div id="workers-list" class="space-y-4">
+            <!-- Workers will be injected here via JS -->
+        </div>
+
+        <!-- Join as Professional Banner -->
+        <div class="mt-8 bg-blue-50 rounded-2xl p-5 border border-blue-100 flex flex-col items-center text-center mb-4 shadow-sm">
+            <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xl mb-3 shadow-inner">
+                <i class="fas fa-handshake"></i>
+            </div>
+            <h4 class="font-bold text-gray-800 mb-1" id="lbl-join-title">Are you skilled labor?</h4>
+            <p class="text-sm text-gray-600 mb-4" id="lbl-join-desc">Contact us to join our family!</p>
+            <button class="bg-white text-blue-600 border border-blue-200 text-sm font-bold px-6 py-2 rounded-full shadow hover:bg-blue-50 transition active:scale-95" id="btn-join-contact">Contact Us</button>
+        </div>
+
+        </div>
+    </div>
+
+    <!-- View: Bookings (Demo) -->
+    <div id="view-bookings" class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24 hidden h-full bg-gray-50">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">My Bookings</h2>
+        
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded">Completed</span>
+                <span class="text-xs text-gray-400">Oct 24, 2026</span>
+            </div>
+            <h4 class="font-bold text-gray-800">Raju Sharma - Plumber</h4>
+            <p class="text-sm text-gray-500 mb-2">Tap repair</p>
+            <p class="text-sm font-semibold text-gray-800">₹250 Paid</p>
+        </div>
+        
+        <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100 mb-4">
+            <div class="flex justify-between items-center mb-2">
+                <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-1 rounded">Upcoming</span>
+                <span class="text-xs text-gray-400">Tomorrow, 10:00 AM</span>
+            </div>
+            <h4 class="font-bold text-gray-800">Vikram Singh - Electrician</h4>
+            <p class="text-sm text-gray-500 mb-2">Fan installation</p>
+            <p class="text-sm font-semibold text-gray-800">Est. ₹300</p>
+        </div>
+    </div>
+
+    <!-- View: Wallet (Demo) -->
+    <div id="view-wallet" class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24 hidden h-full bg-gray-50">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Wallet</h2>
+        
+        <div class="bg-gradient-to-r from-blue-600 to-blue-400 rounded-2xl p-6 text-white shadow-lg mb-6">
+            <p class="text-sm opacity-90 mb-1">Available Balance</p>
+            <h3 class="text-3xl font-bold mb-4">₹1,250.00</h3>
+            <button class="bg-white text-blue-600 text-sm font-bold px-4 py-2 rounded-lg shadow hover:bg-gray-100 transition">Add Money</button>
+        </div>
+        
+        <h3 class="font-bold text-gray-800 mb-4">Recent Transactions</h3>
+        <div class="space-y-3">
+            <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-red-50 text-red-500 rounded-full flex items-center justify-center mr-3"><i class="fas fa-arrow-down"></i></div>
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm">Plumbing Service</p>
+                        <p class="text-xs text-gray-400">Oct 24, 2026</p>
+                    </div>
+                </div>
+                <span class="font-bold text-gray-800">-₹250</span>
+            </div>
+            <div class="flex justify-between items-center bg-white p-3 rounded-lg shadow-sm border border-gray-100">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-green-50 text-green-500 rounded-full flex items-center justify-center mr-3"><i class="fas fa-arrow-up"></i></div>
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm">Added via UPI</p>
+                        <p class="text-xs text-gray-400">Oct 20, 2026</p>
+                    </div>
+                </div>
+                <span class="font-bold text-green-600">+₹500</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- View: Settings (Demo) -->
+    <div id="view-settings" class="flex-1 overflow-y-auto no-scrollbar p-5 pb-24 hidden h-full bg-gray-50">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6">Settings</h2>
+        
+        <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 mb-6 flex items-center">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mr-4">
+                <i class="fas fa-user"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-gray-800 text-lg">John Doe</h3>
+                <p class="text-gray-500 text-sm">+91 98765 00000</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+            <div class="p-4 border-b border-gray-100">
+                <h4 class="font-bold text-gray-800 mb-3"><i class="fas fa-language text-blue-500 mr-2"></i> App Language</h4>
+                <div class="grid grid-cols-2 gap-3">
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                        <input type="radio" name="lang" value="en" class="text-blue-600" checked onchange="changeLanguage('English')">
+                        <span class="ml-2 text-sm font-medium">English</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                        <input type="radio" name="lang" value="te" class="text-blue-600" onchange="changeLanguage('Telugu')">
+                        <span class="ml-2 text-sm font-medium">తెలుగు (Telugu)</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                        <input type="radio" name="lang" value="hi" class="text-blue-600" onchange="changeLanguage('Hindi')">
+                        <span class="ml-2 text-sm font-medium">हिन्दी (Hindi)</span>
+                    </label>
+                    <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition">
+                        <input type="radio" name="lang" value="ur" class="text-blue-600" onchange="changeLanguage('Urdu')">
+                        <span class="ml-2 text-sm font-medium">اردو (Urdu)</span>
+                    </label>
+                </div>
+            </div>
+            <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 border-b border-gray-100">
+                <span class="text-sm font-medium text-gray-700"><i class="fas fa-bell text-gray-400 mr-2"></i> Notifications</span>
+                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            </div>
+            <div class="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50">
+                <span class="text-sm font-medium text-gray-700"><i class="fas fa-question-circle text-gray-400 mr-2"></i> Help & Support</span>
+                <i class="fas fa-chevron-right text-gray-400 text-xs"></i>
+            </div>
+        </div>
+        
+        <button class="w-full bg-red-50 text-red-600 font-bold py-3 rounded-xl border border-red-100 hover:bg-red-100 transition">Log Out</button>
+    </div>
+
+    <!-- Bottom Navigation Bar (App Feel) -->
+    <div class="absolute bottom-0 w-full bg-white border-t border-gray-200 px-6 py-3 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] z-10 shrink-0">
+        <div id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center text-blue-600 cursor-pointer transition-colors nav-item">
+            <i class="fas fa-home text-xl mb-1"></i>
+            <span class="text-[10px] font-semibold">Home</span>
+        </div>
+        <div id="nav-bookings" onclick="switchTab('bookings')" class="flex flex-col items-center text-gray-400 cursor-pointer hover:text-gray-600 transition-colors nav-item">
+            <i class="fas fa-history text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Bookings</span>
+        </div>
+        <div id="nav-wallet" onclick="switchTab('wallet')" class="flex flex-col items-center text-gray-400 cursor-pointer hover:text-gray-600 transition-colors nav-item">
+            <i class="fas fa-wallet text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Wallet</span>
+        </div>
+        <div id="nav-settings" onclick="switchTab('settings')" class="flex flex-col items-center text-gray-400 cursor-pointer hover:text-gray-600 transition-colors nav-item">
+            <i class="fas fa-cog text-xl mb-1"></i>
+            <span class="text-[10px] font-medium">Settings</span>
+        </div>
+    </div>
+
+    <!-- Full Screen Overlays -->
+
+    <!-- 1. Searching Overlay -->
+    <div id="searching-overlay" class="absolute inset-0 bg-white z-50 flex flex-col items-center justify-center hidden">
+        <div class="radar mb-8">
+            <div class="radar-center"></div>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-2">Locating Expert...</h2>
+        <p class="text-gray-500" id="searching-text">Finding the nearest Plumber.</p>
+        <button onclick="cancelSearch()" class="mt-12 text-gray-500 font-semibold py-2 px-6 rounded-full border border-gray-300 hover:bg-gray-50">Cancel</button>
+    </div>
+
+    <!-- 2. Booking Confirmed Overlay -->
+    <div id="confirmed-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-60 z-50 flex flex-col justify-end hidden">
+        <div class="bg-white w-full rounded-t-3xl p-6 pop-in flex flex-col shadow-2xl">
+            <div class="w-12 h-1.5 bg-gray-300 rounded-full mx-auto mb-6"></div>
+            
+            <div class="flex items-center justify-center mb-6">
+                <div class="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center text-3xl shadow-inner">
+                    <i class="fas fa-check"></i>
+                </div>
+            </div>
+            
+            <h2 class="text-2xl font-bold text-center text-gray-800 mb-1">Booking Confirmed!</h2>
+            <p class="text-center text-gray-500 mb-6" id="arrival-text">Arriving in 5 mins</p>
+            
+            <!-- Worker Card in Confirmation -->
+            <div class="bg-gray-50 border border-gray-200 rounded-2xl p-4 flex items-center mb-6">
+                <img id="conf-img" src="https://ui-avatars.com/api/?name=W&background=random" class="w-14 h-14 rounded-full mr-4 shadow-sm object-cover">
+                <div class="flex-1">
+                    <h4 class="font-bold text-gray-800 text-lg" id="conf-name">Worker Name</h4>
+                    <p class="text-sm text-gray-500" id="conf-role">Role • <i class="fas fa-star text-yellow-400 text-xs"></i> <span id="conf-rating">4.8</span></p>
+                </div>
+                <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+            </div>
+
+            <div class="bg-blue-50 rounded-xl p-4 mb-6 flex justify-between items-center">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Contact Number</p>
+                    <p class="font-bold text-gray-800 tracking-wide text-lg" id="conf-phone">+91 98765 43210</p>
+                </div>
+                <!-- Call action -->
+                <a href="#" id="conf-call-btn" class="bg-green-500 text-white w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-green-600 transform transition active:scale-95">
+                    <i class="fas fa-phone-alt"></i>
+                </a>
+            </div>
+
+            <button onclick="closeConfirmation()" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-xl text-lg hover:bg-gray-200 transition">
+                Close Details
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. Location Selector Modal -->
+    <div id="location-overlay" class="absolute inset-0 bg-gray-900 bg-opacity-60 z-50 flex flex-col justify-end hidden">
+        <div class="bg-white w-full rounded-t-3xl p-6 slide-up shadow-2xl flex flex-col max-h-[80vh]">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800" id="lbl-select-loc">Select Location</h2>
+                <button onclick="closeLocationModal()" class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-gray-500 hover:bg-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="relative shadow-sm rounded-lg mb-4">
+                <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                <input type="text" id="loc-search-input" placeholder="Search area..." class="w-full bg-gray-50 border border-gray-200 text-gray-800 rounded-lg py-2.5 pl-10 pr-4 focus:outline-none focus:ring-2 focus:ring-blue-400">
+            </div>
+
+            <div class="overflow-y-auto no-scrollbar pb-4 space-y-2" id="location-list">
+                <!-- Location Items Injected Here via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification for Language -->
+    <div id="toast-message" class="absolute top-10 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full text-sm font-medium shadow-lg z-50 hidden transition-opacity duration-300">
+        Language changed
+    </div>
+
+</div>
+
+    <script>
+    // Mock Data for Professionals
+    const professionals = [
+        { id: 1, name: "Raju Sharma", category: "Plumber", rating: 4.8, distance: "0.8 km", eta: "5 mins", phone: "+91 98765 11111", price: "₹200/hr", img: "R" },
+        { id: 2, name: "Abdul Khan", category: "Plumber", rating: 4.6, distance: "1.5 km", eta: "10 mins", phone: "+91 98765 22222", price: "₹180/hr", img: "A" },
+        { id: 3, name: "Vikram Singh", category: "Electrician", rating: 4.9, distance: "0.5 km", eta: "3 mins", phone: "+91 98765 33333", price: "₹250/hr", img: "V" },
+        { id: 4, name: "Deepak Verma", category: "Electrician", rating: 4.7, distance: "2.1 km", eta: "12 mins", phone: "+91 98765 44444", price: "₹220/hr", img: "D" },
+        { id: 5, name: "Manoj Kumar", category: "Gardener", rating: 4.5, distance: "1.2 km", eta: "8 mins", phone: "+91 98765 55555", price: "₹150/hr", img: "M" },
+        { id: 6, name: "Suresh Patel", category: "Mason", rating: 4.8, distance: "3.0 km", eta: "15 mins", phone: "+91 98765 66666", price: "₹300/hr", img: "S" },
+        { id: 7, name: "Anil Reddy", category: "Plumber", rating: 4.9, distance: "0.2 km", eta: "2 mins", phone: "+91 98765 77777", price: "₹200/hr", img: "A" },
+        { id: 8, name: "Ramesh Babu", category: "Carpenter", rating: 4.6, distance: "1.0 km", eta: "7 mins", phone: "+91 98765 88888", price: "₹250/hr", img: "R" },
+        { id: 9, name: "Ravi Teja", category: "Painter", rating: 4.8, distance: "2.5 km", eta: "15 mins", phone: "+91 98765 99999", price: "₹300/hr", img: "R" },
+        { id: 10, name: "Prakash Rao", category: "Waste", rating: 4.4, distance: "0.5 km", eta: "4 mins", phone: "+91 98765 00001", price: "₹100/visit", img: "P" }
+    ];
+
+    let currentCategory = 'Plumber';
+    let currentLang = 'English';
+    let searchTimeout = null;
+    let toastTimeout = null;
+    let currentLocationKey = 'Banjara Hills';
+
+    const locationKeys = ['Banjara Hills', 'Jubilee Hills', 'Madhapur', 'Gachibowli', 'Kukatpally', 'Secunderabad'];
+
+    // Translation Dictionary for Demo
+    const translations = {
+        'English': { 
+            brand: 'Meemu Sahayam', joinTitle: 'Are you skilled labor?', joinDesc: 'Contact us to join our family!', contactUs: 'Contact Us',
+            home: 'Home', bookings: 'Bookings', wallet: 'Wallet', settings: 'Settings', toast: 'Language changed to English',
+            currentLoc: 'Current Location', selectLoc: 'Select Location', searchLoc: 'Search area...', search: 'Search services...', services: 'Services',
+            plumber: 'Plumber', electrician: 'Electrician', gardener: 'Gardener', mason: 'Mason', carpenter: 'Carpenter', painter: 'Painter', waste: 'Waste',
+            nearby: 'Nearby', viewAll: 'View All', bookNow: 'Book Now', mins: 'mins', km: 'km', city: ', Hyderabad',
+            promoTitle: 'Need help quick?', promoDesc: 'Experts arriving in under 10 mins.', explore: 'Explore',
+            locations: { 'Banjara Hills': 'Banjara Hills', 'Jubilee Hills': 'Jubilee Hills', 'Madhapur': 'Madhapur', 'Gachibowli': 'Gachibowli', 'Kukatpally': 'Kukatpally', 'Secunderabad': 'Secunderabad' },
+            names: { 'Raju Sharma': 'Raju Sharma', 'Abdul Khan': 'Abdul Khan', 'Vikram Singh': 'Vikram Singh', 'Deepak Verma': 'Deepak Verma', 'Manoj Kumar': 'Manoj Kumar', 'Suresh Patel': 'Suresh Patel', 'Anil Reddy': 'Anil Reddy', 'Ramesh Babu': 'Ramesh Babu', 'Ravi Teja': 'Ravi Teja', 'Prakash Rao': 'Prakash Rao' }
+        },
+        'Telugu': { 
+            brand: 'మేము సాయం', joinTitle: 'మీరు నైపుణ్యం గల కార్మికులా?', joinDesc: 'మా కుటుంబంలో చేరడానికి మమ్మల్ని సంప్రదించండి!', contactUs: 'సంప్రదించండి',
+            home: 'హోమ్', bookings: 'బుకింగ్స్', wallet: 'వాలెట్', settings: 'సెట్టింగ్స్', toast: 'భాష తెలుగుకు మార్చబడింది',
+            currentLoc: 'ప్రస్తుత స్థానం', selectLoc: 'స్థానాన్ని ఎంచుకోండి', searchLoc: 'ప్రాంతాన్ని శోధించండి...', search: 'సేవలను శోధించండి...', services: 'సేవలు',
+            plumber: 'ప్లంబర్', electrician: 'ఎలక్ట్రీషియన్', gardener: 'తోటమాలి', mason: 'మేస్త్రి', carpenter: 'కార్పెంటర్', painter: 'పెయింటర్', waste: 'చెత్త నిర్వాహకుడు',
+            nearby: 'సమీప', viewAll: 'అన్నీ చూడండి', bookNow: 'బుక్ చేయండి', mins: 'నిమి', km: 'కి.మీ', city: ', హైదరాబాద్',
+            promoTitle: 'త్వరిత సహాయం కావాలా?', promoDesc: 'నిపుణులు 10 నిమిషాల్లో వస్తారు.', explore: 'అన్వేషించండి',
+            locations: { 'Banjara Hills': 'బంజారా హిల్స్', 'Jubilee Hills': 'జూబ్లీ హిల్స్', 'Madhapur': 'మాదాపూర్', 'Gachibowli': 'గచ్చిబౌలి', 'Kukatpally': 'కూకట్‌పల్లి', 'Secunderabad': 'సికింద్రాబాద్' },
+            names: { 'Raju Sharma': 'రాజు శర్మ', 'Abdul Khan': 'అబ్దుల్ ఖాన్', 'Vikram Singh': 'విక్రమ్ సింగ్', 'Deepak Verma': 'దీపక్ వర్మ', 'Manoj Kumar': 'మనోజ్ కుమార్', 'Suresh Patel': 'సురేష్ పటేల్', 'Anil Reddy': 'అనిల్ రెడ్డి', 'Ramesh Babu': 'రమేష్ బాబు', 'Ravi Teja': 'రవితేజ', 'Prakash Rao': 'ప్రకాష్ రావు' }
+        },
+        'Hindi': { 
+            brand: 'मीमु सहायम', joinTitle: 'क्या आप कुशल श्रमिक हैं?', joinDesc: 'हमारे परिवार में शामिल होने के लिए हमसे संपर्क करें!', contactUs: 'संपर्क करें',
+            home: 'होम', bookings: 'बुकिंग', wallet: 'वॉलेट', settings: 'सेटिंग्स', toast: 'भाषा हिंदी में बदल गई',
+            currentLoc: 'वर्तमान स्थान', selectLoc: 'स्थान चुनें', searchLoc: 'क्षेत्र खोजें...', search: 'सेवाएं खोजें...', services: 'सेवाएं',
+            plumber: 'प्लंबर', electrician: 'इलेक्ट्रीशियन', gardener: 'माली', mason: 'राजमिस्त्री', carpenter: 'बढ़ई', painter: 'पेंटर', waste: 'कचरा प्रबंधन',
+            nearby: 'नज़दीकी', viewAll: 'सभी देखें', bookNow: 'बुक करें', mins: 'मिनट', km: 'किमी', city: ', हैदराबाद',
+            promoTitle: 'क्या जल्दी मदद चाहिए?', promoDesc: 'विशेषज्ञ 10 मिनट के अंदर पहुँच रहे हैं।', explore: 'खोजें',
+            locations: { 'Banjara Hills': 'बंजारा हिल्स', 'Jubilee Hills': 'जुबली हिल्स', 'Madhapur': 'माधापुर', 'Gachibowli': 'गच्चीबाउली', 'Kukatpally': 'कुक्कटपल्ली', 'Secunderabad': 'सिकंदराबाद' },
+            names: { 'Raju Sharma': 'राजू शर्मा', 'Abdul Khan': 'अब्दुल खान', 'Vikram Singh': 'विक्रम सिंह', 'Deepak Verma': 'दीपक वर्मा', 'Manoj Kumar': 'मनोज कुमार', 'Suresh Patel': 'सुरेश पटेल', 'Anil Reddy': 'अनिल रेड्डी', 'Ramesh Babu': 'रमेश बाबू', 'Ravi Teja': 'रवि तेजा', 'Prakash Rao': 'प्रकाश राव' }
+        },
+        'Urdu': { 
+            brand: 'مِیمو سہایم', joinTitle: 'کیا آپ ہنر مند مزدور ہیں؟', joinDesc: 'ہمارے خاندان میں شامل ہونے کے لیے ہم سے رابطہ کریں!', contactUs: 'رابطہ کریں',
+            home: 'ہوم', bookings: 'بکنگ', wallet: 'بٹوہ', settings: 'ترتیبات', toast: 'زبان اردو میں تبدیل ہو گئی',
+            currentLoc: 'موجودہ مقام', selectLoc: 'مقام منتخب کریں', searchLoc: 'علاقہ تلاش کریں...', search: 'خدمات تلاش کریں...', services: 'خدمات',
+            plumber: 'پلمبر', electrician: 'الیکٹریشن', gardener: 'مالی', mason: 'مستری', carpenter: 'بڑھئی', painter: 'پینٹر', waste: 'کچرا اٹھانے والا',
+            nearby: 'قریب ترین', viewAll: 'سب دیکھیں', bookNow: 'بک کریں', mins: 'منٹ', km: 'کلومیٹر', city: '، حیدرآباد',
+            promoTitle: 'کیا فوری مدد چاہیے؟', promoDesc: 'ماہرین 10 منٹ میں پہنچ رہے ہیں۔', explore: 'دریافت کریں',
+            locations: { 'Banjara Hills': 'بنجارہ ہلز', 'Jubilee Hills': 'جوبلی ہلز', 'Madhapur': 'مادھاپور', 'Gachibowli': 'گچی باؤلی', 'Kukatpally': 'کوکٹ پلی', 'Secunderabad': 'سکندرآباد' },
+            names: { 'Raju Sharma': 'راجو شرما', 'Abdul Khan': 'عبدالخان', 'Vikram Singh': 'وکرم سنگھ', 'Deepak Verma': 'دیپک ورما', 'Manoj Kumar': 'منوج کمار', 'Suresh Patel': 'سریش پٹیل', 'Anil Reddy': 'انیل ریڈی', 'Ramesh Babu': 'رمیش بابو', 'Ravi Teja': 'روی تیجا', 'Prakash Rao': 'پرکاش راؤ' }
+        }
+    };
+
+    // Initialize
+    window.onload = () => {
+        selectCategory('Plumber');
+    };
+
+    function switchTab(tabId) {
+        // Hide all views
+        document.getElementById('view-home').classList.add('hidden');
+        document.getElementById('view-bookings').classList.add('hidden');
+        document.getElementById('view-wallet').classList.add('hidden');
+        document.getElementById('view-settings').classList.add('hidden');
+        
+        // Show target view
+        const targetView = document.getElementById('view-' + tabId);
+        targetView.classList.remove('hidden');
+        
+        // Retrigger animation by reflowing
+        void targetView.offsetWidth; 
+        targetView.classList.add('fade-in');
+        
+        // Reset all nav icons to gray
+        const navItems = document.querySelectorAll('.nav-item');
+        navItems.forEach(item => {
+            item.classList.remove('text-blue-600');
+            item.classList.add('text-gray-400');
+            item.querySelector('span').classList.remove('font-semibold');
+            item.querySelector('span').classList.add('font-medium');
+        });
+
+        // Set active nav icon to blue
+        const activeNav = document.getElementById('nav-' + tabId);
+        activeNav.classList.remove('text-gray-400');
+        activeNav.classList.add('text-blue-600');
+        activeNav.querySelector('span').classList.remove('font-medium');
+        activeNav.querySelector('span').classList.add('font-semibold');
+    }
+
+    function changeLanguage(langName) {
+        currentLang = langName;
+        const t = translations[langName];
+        if (t) {
+            // Update Navigation Text
+            document.querySelector('#nav-home span').innerText = t.home;
+            document.querySelector('#nav-bookings span').innerText = t.bookings;
+            document.querySelector('#nav-wallet span').innerText = t.wallet;
+            document.querySelector('#nav-settings span').innerText = t.settings;
+            
+            // Update Home Screen Text
+            document.getElementById('lbl-current-loc').innerText = t.currentLoc;
+            document.getElementById('search-input').placeholder = t.search;
+            document.getElementById('lbl-services').innerText = t.services;
+            document.getElementById('lbl-cat-plumber').innerText = t.plumber;
+            document.getElementById('lbl-cat-electrician').innerText = t.electrician;
+            document.getElementById('lbl-cat-gardener').innerText = t.gardener;
+            document.getElementById('lbl-cat-mason').innerText = t.mason;
+            document.getElementById('lbl-cat-carpenter').innerText = t.carpenter;
+            document.getElementById('lbl-cat-painter').innerText = t.painter;
+            document.getElementById('lbl-cat-waste').innerText = t.waste;
+            document.getElementById('lbl-view-all').innerText = t.viewAll;
+
+            // App Name & Join Banner
+            document.getElementById('app-brand').innerText = t.brand;
+            document.getElementById('lbl-join-title').innerText = t.joinTitle;
+            document.getElementById('lbl-join-desc').innerText = t.joinDesc;
+            document.getElementById('btn-join-contact').innerText = t.contactUs;
+
+            // Promo Banner and Location
+            document.getElementById('promo-title').innerText = t.promoTitle;
+            document.getElementById('promo-desc').innerText = t.promoDesc;
+            document.getElementById('promo-btn').innerText = t.explore;
+            
+            // Location specifics
+            document.getElementById('location-text').innerText = `${t.locations[currentLocationKey]}${t.city}`;
+            document.getElementById('lbl-select-loc').innerText = t.selectLoc;
+            document.getElementById('loc-search-input').placeholder = t.searchLoc;
+            
+            // Render location list in modal to reflect language changes
+            renderLocationList();
+
+            // Re-render current category list to translate inside list
+            selectCategory(currentCategory);
+            
+            // Show localized toast
+            const toast = document.getElementById('toast-message');
+            toast.innerText = t.toast;
+            toast.classList.remove('hidden');
+            toast.classList.add('opacity-100');
+            
+            if (toastTimeout) clearTimeout(toastTimeout);
+            
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+    }
+
+    function selectCategory(category) {
+        currentCategory = category;
+        const t = translations[currentLang];
+        
+        // Update Title dynamically with translated language
+        const translatedCat = t[category.toLowerCase()] || category;
+        document.getElementById('list-title').innerText = `${t.nearby} ${translatedCat}`;
+
+        // Reset Category Styles
+        const categories = ['Plumber', 'Electrician', 'Gardener', 'Mason', 'Carpenter', 'Painter', 'Waste'];
+        categories.forEach(cat => {
+            const el = document.getElementById(`cat-${cat.toLowerCase()}`);
+            if(el) {
+                el.classList.remove('ring-4', 'ring-offset-2', 'ring-blue-400');
+            }
+        });
+
+        // Highlight Selected
+        const selectedEl = document.getElementById(`cat-${category.toLowerCase()}`);
+        if(selectedEl) {
+            selectedEl.classList.add('ring-4', 'ring-offset-2', 'ring-blue-400');
+        }
+
+        // Render List
+        renderWorkersList(category, t);
+    }
+
+    function renderWorkersList(category, t) {
+        if(!t) t = translations[currentLang];
+        const listContainer = document.getElementById('workers-list');
+        listContainer.innerHTML = '';
+
+        const filtered = professionals.filter(p => p.category === category);
+
+        if(filtered.length === 0) {
+            const translatedCat = t[category.toLowerCase()] || category;
+            listContainer.innerHTML = `<p class="text-center text-gray-500 py-4">No ${translatedCat}s nearby at the moment.</p>`;
+            return;
+        }
+
+        filtered.forEach((worker, index) => {
+            const localizedEta = worker.eta.replace('mins', t.mins);
+            const localizedDistance = worker.distance.replace('km', t.km);
+            const translatedName = t.names[worker.name] || worker.name;
+
+            const cardHTML = `
+                <div class="bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center justify-between active:bg-gray-50 transition-all hover:shadow-md slide-up" style="animation-delay: ${index * 0.1}s">
+                    <div class="flex items-center">
+                        <div class="relative">
+                            <img src="https://ui-avatars.com/api/?name=${worker.img}&background=random&color=fff" alt="${translatedName}" class="w-12 h-12 rounded-full object-cover shadow-sm">
+                            <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                        </div>
+                        <div class="ml-4">
+                            <h4 class="font-bold text-gray-800">${translatedName}</h4>
+                            <div class="flex items-center text-xs text-gray-500 mt-1">
+                                <span class="bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded flex items-center mr-2">
+                                    <i class="fas fa-star text-[10px] mr-1"></i> ${worker.rating}
+                                </span>
+                                <span><i class="fas fa-map-marker-alt mr-1"></i>${localizedDistance}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex flex-col items-end">
+                        <span class="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-1 rounded-full mb-2">${localizedEta}</span>
+                        <button onclick="requestService(${worker.id})" class="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm hover:bg-blue-700 active:scale-95 transition-transform">
+                            ${t.bookNow}
+                        </button>
+                    </div>
+                </div>
+            `;
+            listContainer.innerHTML += cardHTML;
+        });
+    }
+
+    function requestService(workerId) {
+        const worker = professionals.find(p => p.id === workerId);
+        if(!worker) return;
+
+        // 1. Show Searching Overlay
+        const searchOverlay = document.getElementById('searching-overlay');
+        document.getElementById('searching-text').innerText = `Requesting ${worker.name}...`;
+        searchOverlay.classList.remove('hidden');
+
+        // 2. Simulate API Call / Finding time
+        searchTimeout = setTimeout(() => {
+            searchOverlay.classList.add('hidden');
+            showConfirmation(worker);
+        }, 2000); // 2 seconds search simulation
+    }
+
+    function cancelSearch() {
+        if(searchTimeout) clearTimeout(searchTimeout);
+        document.getElementById('searching-overlay').classList.add('hidden');
+    }
+
+    function showConfirmation(worker) {
+        const confOverlay = document.getElementById('confirmed-overlay');
+        const t = translations[currentLang];
+        const translatedName = t.names[worker.name] || worker.name;
+        const translatedRole = t[worker.category.toLowerCase()] || worker.category;
+        
+        // Populate data
+        document.getElementById('arrival-text').innerText = `Arriving in ${worker.eta.replace('mins', t.mins)}`;
+        document.getElementById('conf-name').innerText = translatedName;
+        document.getElementById('conf-role').innerText = translatedRole;
+        document.getElementById('conf-rating').innerText = worker.rating;
+        document.getElementById('conf-phone').innerText = worker.phone;
+        document.getElementById('conf-img').src = `https://ui-avatars.com/api/?name=${worker.img}&background=random&color=fff`;
+        
+        // Setup Call Button
+        document.getElementById('conf-call-btn').href = `tel:${worker.phone.replace(/\s+/g, '')}`;
+
+        // Show Overlay
+        confOverlay.classList.remove('hidden');
+    }
+
+    function closeConfirmation() {
+        document.getElementById('confirmed-overlay').classList.add('hidden');
+    }
+
+    function openLocationModal() {
+        renderLocationList();
+        document.getElementById('location-overlay').classList.remove('hidden');
+    }
+
+    function closeLocationModal() {
+        document.getElementById('location-overlay').classList.add('hidden');
+    }
+
+    function renderLocationList() {
+        const t = translations[currentLang];
+        const list = document.getElementById('location-list');
+        list.innerHTML = '';
+        
+        locationKeys.forEach(locKey => {
+            const locName = t.locations[locKey];
+            const isSelected = locKey === currentLocationKey;
+            
+            list.innerHTML += `
+                <div onclick="selectLocation('${locKey}')" class="flex items-center justify-between p-3 rounded-xl cursor-pointer transition-colors ${isSelected ? 'bg-blue-50 border border-blue-100' : 'hover:bg-gray-50 border border-transparent'}">
+                    <div class="flex items-center">
+                        <i class="fas fa-map-marker-alt ${isSelected ? 'text-blue-500' : 'text-gray-400'} mr-3"></i>
+                        <span class="${isSelected ? 'font-bold text-blue-700' : 'font-medium text-gray-700'}">${locName}</span>
+                    </div>
+                    ${isSelected ? '<i class="fas fa-check-circle text-blue-500"></i>' : ''}
+                </div>
+            `;
+        });
+    }
+
+    function selectLocation(locKey) {
+        currentLocationKey = locKey;
+        const t = translations[currentLang];
+        document.getElementById('location-text').innerText = `${t.locations[locKey]}${t.city}`;
+        closeLocationModal();
+    }
+</script>
+
+</body>
+</html>
